@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MeinePunkte" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:fontFamily">sans</item><item name="colorPrimary">#17365F</item><item name="colorAccent">#FFCF55</item><item name="android:navigationBarColor">#FFFFFF</item><item name="android:statusBarColor">#17365F</item>
+    </style>
+</resources>
