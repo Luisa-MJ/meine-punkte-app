@@ -15,6 +15,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
@@ -38,6 +41,11 @@ public class MainActivity extends AppCompatActivity {
         web.getSettings().setAllowFileAccess(true);
         web.setWebViewClient(new WebViewClient());
         web.addJavascriptInterface(new Bridge(),"Android");
+        ViewCompat.setOnApplyWindowInsetsListener(web,(view,insets)->{
+            Insets bars=insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            view.setPadding(0,bars.top,0,bars.bottom);
+            return insets;
+        });
         web.loadUrl("file:///android_asset/index.html");
         setContentView(web);
     }
@@ -64,11 +72,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void parse(String raw){
-        String text=raw.replace('\u00A0',' ').replace(',','.');
-        Double kcal=find(text,"(?i)(?:energie|energy|brennwert)?[^\\n]{0,45}?(\\d{2,4}(?:\\.\\d+)?)\\s*kcal");
-        if(kcal==null) kcal=find(text,"(?i)(\\d{2,4}(?:\\.\\d+)?)\\s*kcal");
-        Double fat=find(text,"(?i)(?:fett|fat)\\s*(?:davon|of which)?[^\\d\\n]{0,18}(\\d{1,3}(?:\\.\\d+)?)\\s*g");
-        if(fat==null) fat=find(text,"(?i)(?:fett|fat)[^\\n]{0,35}?(\\d{1,3}(?:\\.\\d+)?)");
+        String text=raw.replace('\u00A0',' ').replace(',','.').replaceAll("[|]"," ");
+        Double kcal=find(text,"(?i)(\\d{2,4}(?:\\.\\d+)?)\\s*kcal");
+        if(kcal==null) kcal=find(text,"(?is)(?:energie|energy|brennwert).{0,100}?(\\d{2,4}(?:\\.\\d+)?)\\s*(?:kcal)?");
+        Double fat=find(text,"(?is)(?:^|\\n)\\s*(?:fett|fat)\\b.{0,80}?(\\d{1,3}(?:\\.\\d+)?)\\s*g");
+        if(fat==null) fat=find(text,"(?is)(?:fett|fat)\\b.{0,80}?(\\d{1,3}(?:\\.\\d+)?)");
         final String k=kcal==null?"":clean(kcal), f=fat==null?"":clean(fat);
         web.post(() -> web.evaluateJavascript("window.scanResult("+quote(k)+","+quote(f)+","+quote(raw)+")",null));
     }
